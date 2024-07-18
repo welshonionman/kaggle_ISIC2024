@@ -1,6 +1,6 @@
 import torch
 
-COMP_NAME = "ISIC"
+COMP_NAME = "ISIC2024"
 ROOT_DIR = "/kaggle/input/isic-2024-challenge"
 TRAIN_DIR = f"{ROOT_DIR}/train-image/image"
 TEST_CSV = f"{ROOT_DIR}/test-metadata.csv"
