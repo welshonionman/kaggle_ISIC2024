@@ -46,8 +46,9 @@ def train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cf
 
         train_loss += loss.item()
         average_loss = train_loss / (batch_idx + 1)
-        scheduler.step()
+
         pbar_train_desc(pbar_train, scheduler, epoch, cfg.epochs, average_loss)
+    scheduler.step()
 
 
 def valid_1epoch(model, valid_loader, criterion, epoch, cfg):
@@ -80,13 +81,13 @@ def valid_1epoch(model, valid_loader, criterion, epoch, cfg):
     return average_loss, score
 
 
-def epoch_end(avg_val_loss, best_val_loss, model, score, save_path):
-    if avg_val_loss < best_val_loss:
-        best_val_loss = avg_val_loss
-        patience_count = 0
+def epoch_end(avg_val_loss, best_score, score, model, save_path):
+    if score > best_score:
+        best_score = score
         torch.save(model.state_dict(), save_path)
         print(f"Val Loss: {avg_val_loss:.4f}  score: {score:.4f}\tSAVED MODEL\n")
 
     else:
-        patience_count += 1
         print(f"Val Loss: {avg_val_loss:.4f}  score: {score:.4f}\n")
+
+    return best_score
