@@ -8,7 +8,7 @@ from tqdm import tqdm
 from src.constants import COMP_NAME, DEVICE
 from src.dataset import get_test_dataloader, get_train_dataloader
 from src.model import get_lossfn, get_model, get_optimizer, get_scheduler
-from src.preprocess.base import infer_base_preprocess, train_base_preprocess
+from src.preprocess import get_infer_preprocess, get_train_preprocess
 
 from .epoch import epoch_end, train_1epoch, valid_1epoch
 from .utils import set_seed
@@ -17,7 +17,7 @@ from .utils import set_seed
 def base_train_pipeline(cfg):
     set_seed(cfg.seed)
 
-    df = train_base_preprocess(cfg)
+    df = get_train_preprocess(cfg)(cfg)
     train_loader, valid_loader = get_train_dataloader(df, 0, cfg)
 
     model = get_model(cfg).to(DEVICE)
@@ -25,7 +25,7 @@ def base_train_pipeline(cfg):
     scheduler = get_scheduler(optimizer, cfg)
     criterion = get_lossfn(cfg)
 
-    best_val_loss = float("inf")
+    best_score = 0
 
     wandb.init(
         project=COMP_NAME, name=cfg.exp_name, dir="/workspace/", mode=cfg.wandb_mode
@@ -40,13 +40,13 @@ def base_train_pipeline(cfg):
         model_path = Path(f"/kaggle/weights/{cfg.exp_name}/{cfg.exp_name}.pth")
         model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        epoch_end(average_loss, best_val_loss, model, score, model_path)
+        best_score = epoch_end(average_loss, best_score, score, model, model_path)
 
 
 def base_infer_pipeline(cfg):
     set_seed(cfg.seed)
 
-    df, df_sub = infer_base_preprocess(cfg)
+    df, df_sub = get_infer_preprocess(cfg)(cfg)
     test_loader = get_test_dataloader(df, cfg)
 
     model = get_model(cfg)

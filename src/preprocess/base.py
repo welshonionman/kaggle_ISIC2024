@@ -16,15 +16,17 @@ def train_base_preprocess(cfg):
     df = pd.read_csv(f"{ROOT_DIR}/train-metadata.csv")
 
     df_positive = df[df["target"] == 1].reset_index(drop=True)
-    df_negative = df[df["target"] == 0].reset_index(drop=True)
+
+    positive_sample_num = df_positive.shape[0]
+
+    df_negative = df[df["target"] == 0]
+    df_negative=df_negative.sample(positive_sample_num * cfg.sampling_factor).reset_index(drop=True)
+
 
     df = pd.concat(
         [
             df_positive,
-            df_negative.iloc[
-                : df_positive.shape[0] * 20,
-                :,
-            ],
+            df_negative,
         ]
     )
 
