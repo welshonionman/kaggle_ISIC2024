@@ -19,3 +19,4 @@ torchshow
 lightgbm
 timm
 warmup_scheduler
+catboost
