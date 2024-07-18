@@ -7,14 +7,33 @@ from .base import (
     ISIC_Base_Train_Dataset,
     ISIC_Base_Valid_Dataset,
 )
+from .fullimage import (
+    ISIC_Fullimage_Test_Dataset,
+    ISIC_Fullimage_Train_Dataset,
+    ISIC_Fullimage_Valid_Dataset,
+)
 
 
 def get_train_dataloader(df, fold, cfg):
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
-    train_dataset = ISIC_Base_Train_Dataset(df_train, transforms=cfg.train_transform)
-    valid_dataset = ISIC_Base_Valid_Dataset(df_valid, transforms=cfg.valid_transform)
+    if cfg.dataset == "base":
+        train_dataset = ISIC_Base_Train_Dataset(
+            df_train, transforms=cfg.train_transform
+        )
+        valid_dataset = ISIC_Base_Valid_Dataset(
+            df_valid, transforms=cfg.valid_transform
+        )
+    elif cfg.dataset == "fullimage":
+        train_dataset = ISIC_Fullimage_Train_Dataset(
+            df_train, transforms=cfg.train_transform
+        )
+        valid_dataset = ISIC_Fullimage_Valid_Dataset(
+            df_valid, transforms=cfg.valid_transform
+        )
+    else:
+        raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
 
     train_loader = DataLoader(
         train_dataset,
@@ -36,7 +55,16 @@ def get_train_dataloader(df, fold, cfg):
 
 
 def get_test_dataloader(df, cfg):
-    test_dataset = ISIC_Base_Test_Dataset(df, TEST_HDF, transforms=cfg.valid_transform)
+    if cfg.dataset == "base":
+        test_dataset = ISIC_Base_Test_Dataset(
+            df, TEST_HDF, transforms=cfg.valid_transform
+        )
+    elif cfg.dataset == "fullimage":
+        test_dataset = ISIC_Fullimage_Test_Dataset(
+            df, TEST_HDF, transforms=cfg.valid_transform
+        )
+    else:
+        raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
 
     test_loader = DataLoader(
         test_dataset,
