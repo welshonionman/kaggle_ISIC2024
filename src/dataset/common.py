@@ -18,22 +18,23 @@ def get_train_dataloader(df, fold, cfg):
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
-    if cfg.dataset == "base":
-        train_dataset = ISIC_Base_Train_Dataset(
-            df_train, transforms=cfg.train_transform
-        )
-        valid_dataset = ISIC_Base_Valid_Dataset(
-            df_valid, transforms=cfg.valid_transform
-        )
-    elif cfg.dataset == "fullimage":
-        train_dataset = ISIC_Fullimage_Train_Dataset(
-            df_train, transforms=cfg.train_transform
-        )
-        valid_dataset = ISIC_Fullimage_Valid_Dataset(
-            df_valid, transforms=cfg.valid_transform
-        )
-    else:
-        raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
+    match cfg.dataset:
+        case "base":
+            train_dataset = ISIC_Base_Train_Dataset(
+                df_train, transforms=cfg.train_transform
+            )
+            valid_dataset = ISIC_Base_Valid_Dataset(
+                df_valid, transforms=cfg.valid_transform
+            )
+        case "fullimage":
+            train_dataset = ISIC_Fullimage_Train_Dataset(
+                df_train, transforms=cfg.train_transform
+            )
+            valid_dataset = ISIC_Fullimage_Valid_Dataset(
+                df_valid, transforms=cfg.valid_transform
+            )
+        case _:
+            raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
 
     train_loader = DataLoader(
         train_dataset,

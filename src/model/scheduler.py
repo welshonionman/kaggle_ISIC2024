@@ -36,24 +36,21 @@ class GradualWarmupSchedulerV2(GradualWarmupScheduler):
 
 
 def get_scheduler(optimizer, cfg):
-    if cfg.scheduler == "CosineAnnealingLR":
-        scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=cfg.epochs, eta_min=cfg.min_lr
-        )
-
-    elif cfg.scheduler == "CosineAnnealingLR_GradualWarmupSchedulerV2":
-        scheduler_cosine = lr_scheduler.CosineAnnealingLR(
-            optimizer, cfg.epochs, eta_min=cfg.min_lr
-        )
-
-        scheduler = GradualWarmupSchedulerV2(
-            optimizer,
-            multiplier=10,
-            total_epoch=2,
-            after_scheduler=scheduler_cosine,
-        )
-
-    else:
-        raise ValueError(f"Invalid Scheduler: {cfg.scheduler}")
-
+    match cfg.scheduler:
+        case "CosineAnnealingLR":
+            scheduler = lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=cfg.epochs, eta_min=cfg.min_lr
+            )
+        case "CosineAnnealingLR_GradualWarmupSchedulerV2":
+            scheduler_cosine = lr_scheduler.CosineAnnealingLR(
+                optimizer, cfg.epochs, eta_min=cfg.min_lr
+            )
+            scheduler = GradualWarmupSchedulerV2(
+                optimizer,
+                multiplier=10,
+                total_epoch=2,
+                after_scheduler=scheduler_cosine,
+            )
+        case _:
+            raise ValueError(f"Invalid Scheduler: {cfg.scheduler}")
     return scheduler
