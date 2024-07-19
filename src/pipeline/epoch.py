@@ -49,6 +49,7 @@ def train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cf
 
         pbar_train_desc(pbar_train, scheduler, epoch, cfg.epochs, average_loss)
     scheduler.step()
+    return average_loss
 
 
 def valid_1epoch(model, valid_loader, criterion, epoch, cfg):

@@ -32,15 +32,15 @@ def base_train_pipeline(cfg):
     )
 
     for epoch in range(cfg.epochs):
-        train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cfg)
-        average_loss, score = valid_1epoch(model, valid_loader, criterion, epoch, cfg)
+        train_loss=train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cfg)
+        valid_loss, score = valid_1epoch(model, valid_loader, criterion, epoch, cfg)
 
-        wandb.log({"epoch": epoch, "loss": average_loss, "score": score})
+        wandb.log({"epoch": epoch,"train_loss":train_loss, "valid_loss": valid_loss, "score": score})
 
         model_path = Path(f"/kaggle/weights/{cfg.exp_name}/{cfg.exp_name}.pth")
         model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        best_score = epoch_end(average_loss, best_score, score, model, model_path)
+        best_score = epoch_end(valid_loss, best_score, score, model, model_path)
 
 
 def base_infer_pipeline(cfg):
