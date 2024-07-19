@@ -20,7 +20,7 @@ jobs:
         run: pip install kaggle
 
       - name: zip source
-        run: zip -r ./upload_kaggle_dir/src.zip ./
+        run: zip -r ./upload_kaggle_dir/src.zip ./ -x ".github" ".git"
 
       - name: Upload to kaggle
         env:
