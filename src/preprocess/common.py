@@ -1,10 +1,10 @@
-from .base import infer_base_preprocess, train_base_preprocess
+from .base_negative_sampling import infer_base_preprocess, train_base_preprocess
 from .fullimage import infer_fullimage_preprocess, train_fullimage_preprocess
 
 
 def get_train_preprocess(cfg):
     match cfg.preprocess:
-        case "base":
+        case "base_negative_sampling":
             return train_base_preprocess
         case "fullimage":
             return train_fullimage_preprocess

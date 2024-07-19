@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 
 from src.constants import TEST_HDF
 
-from .base import (
+from .base_equal_sampling import (
     ISIC_Base_Test_Dataset,
     ISIC_Base_Train_Dataset,
     ISIC_Base_Valid_Dataset,
@@ -19,7 +19,7 @@ def get_train_dataloader(df, fold, cfg):
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
     match cfg.dataset:
-        case "base":
+        case "base_equal_sampling":
             train_dataset = ISIC_Base_Train_Dataset(
                 df_train, transforms=cfg.train_transform
             )
