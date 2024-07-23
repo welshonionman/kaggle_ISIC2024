@@ -23,7 +23,6 @@ def base_train_pipeline(cfg):
     model = get_model(cfg).to(DEVICE)
     optimizer = get_optimizer(model, cfg)
     scheduler = get_scheduler(optimizer, cfg)
-    criterion = get_lossfn(cfg)
 
     best_score = 0
 
@@ -32,10 +31,17 @@ def base_train_pipeline(cfg):
     )
 
     for epoch in range(cfg.epochs):
-        train_loss=train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cfg)
-        valid_loss, score = valid_1epoch(model, valid_loader, criterion, epoch, cfg)
+        train_loss = train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg)
+        valid_loss, score = valid_1epoch(model, valid_loader, epoch, cfg)
 
-        wandb.log({"epoch": epoch,"train_loss":train_loss, "valid_loss": valid_loss, "score": score})
+        wandb.log(
+            {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "valid_loss": valid_loss,
+                "score": score,
+            }
+        )
 
         model_path = Path(f"/kaggle/weights/{cfg.exp_name}/{cfg.exp_name}.pth")
         model_path.parent.mkdir(parents=True, exist_ok=True)
