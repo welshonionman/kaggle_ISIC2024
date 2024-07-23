@@ -2,6 +2,7 @@ from glob import glob
 
 import pandas as pd
 from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.preprocessing import OrdinalEncoder
 
 from src.constants import ROOT_DIR, SAMPLE, TEST_CSV, TRAIN_DIR
 
@@ -14,14 +15,26 @@ def train_base_preprocess(cfg):
     train_images = sorted(glob(f"{TRAIN_DIR}/*.jpg"))
 
     df = pd.read_csv(f"{ROOT_DIR}/train-metadata.csv")
+    oe = OrdinalEncoder()
+    categorical_cols = [
+        "tbp_lv_location_simple",
+        "tbp_lv_location",
+        "tbp_tile_type",
+        "attribution",
+        "anatom_site_general",
+        "sex",
+        "copyright_license",
+    ]
+    df[categorical_cols] = oe.fit_transform(df[categorical_cols])
 
     df_positive = df[df["target"] == 1].reset_index(drop=True)
 
     positive_sample_num = df_positive.shape[0]
 
     df_negative = df[df["target"] == 0]
-    df_negative=df_negative.sample(positive_sample_num * cfg.sampling_factor).reset_index(drop=True)
-
+    df_negative = df_negative.sample(
+        positive_sample_num * cfg.sampling_factor
+    ).reset_index(drop=True)
 
     df = pd.concat(
         [
