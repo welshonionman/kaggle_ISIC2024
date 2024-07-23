@@ -8,11 +8,11 @@ from torch.utils.data import Dataset
 
 
 class ISIC_Fullimage_Train_Dataset(Dataset):
-    def __init__(self, df, transforms=None):
+    def __init__(self, df, cfg):
         self.df = df
         self.file_names = self.df["file_path"].values
         self.targets = self.df["target"].values
-        self.transforms = transforms
+        self.transforms = cfg.train_transform
 
     def __len__(self):
         return len(self.df)
@@ -30,11 +30,11 @@ class ISIC_Fullimage_Train_Dataset(Dataset):
 
 
 class ISIC_Fullimage_Valid_Dataset(Dataset):
-    def __init__(self, df, transforms=None):
+    def __init__(self, df, cfg):
         self.df = df
         self.file_names = df["file_path"].values
         self.targets = df["target"].values
-        self.transforms = transforms
+        self.transforms = cfg.valid_transform
 
     def __len__(self):
         return len(self.df)
@@ -52,12 +52,12 @@ class ISIC_Fullimage_Valid_Dataset(Dataset):
 
 
 class ISIC_Fullimage_Test_Dataset(Dataset):
-    def __init__(self, df, file_hdf, transforms=None):
+    def __init__(self, df, file_hdf, cfg):
         self.df = df
         self.fp_hdf = h5py.File(file_hdf, mode="r")
         self.isic_ids = df["isic_id"].values
         self.targets = df["target"].values
-        self.transforms = transforms
+        self.transforms = cfg.valid_transform
 
     def __len__(self):
         return len(self.isic_ids)
@@ -70,7 +70,4 @@ class ISIC_Fullimage_Test_Dataset(Dataset):
         if self.transforms:
             img = self.transforms(image=img)["image"]
 
-        return {
-            "image": img,
-            "target": target,
-        }
+        return {"image": img, "target": target}

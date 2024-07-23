@@ -7,14 +7,14 @@ from torch.utils.data import Dataset
 
 
 class ISIC_Base_Train_Dataset(Dataset):
-    def __init__(self, df, transforms=None):
+    def __init__(self, df, cfg):
         self.df_positive = df[df["target"] == 1].reset_index()
         self.df_negative = df[df["target"] == 0].reset_index()
         self.file_names_positive = self.df_positive["file_path"].values
         self.file_names_negative = self.df_negative["file_path"].values
         self.targets_positive = self.df_positive["target"].values
         self.targets_negative = self.df_negative["target"].values
-        self.transforms = transforms
+        self.transforms = cfg.train_transform
 
     def __len__(self):
         return len(self.df_positive) * 2
@@ -42,11 +42,11 @@ class ISIC_Base_Train_Dataset(Dataset):
 
 
 class ISIC_Base_Valid_Dataset(Dataset):
-    def __init__(self, df, transforms=None):
+    def __init__(self, df, cfg):
         self.df = df
         self.file_names = df["file_path"].values
         self.targets = df["target"].values
-        self.transforms = transforms
+        self.transforms = cfg.valid_transform
 
     def __len__(self):
         return len(self.df)
@@ -64,12 +64,12 @@ class ISIC_Base_Valid_Dataset(Dataset):
 
 
 class ISIC_Base_Test_Dataset(Dataset):
-    def __init__(self, df, file_hdf, transforms=None):
+    def __init__(self, df, file_hdf, cfg):
         self.df = df
         self.hdf_path = h5py.File(file_hdf, mode="r")
         self.isic_ids = df["isic_id"].values
         self.targets = df["target"].values
-        self.transforms = transforms
+        self.transforms = cfg.valid_transform
 
     def __len__(self):
         return len(self.isic_ids)
@@ -84,7 +84,4 @@ class ISIC_Base_Test_Dataset(Dataset):
         if self.transforms:
             img = self.transforms(image=img)["image"]
 
-        return {
-            "image": img,
-            "target": target,
-        }
+        return {"image": img, "target": target}
