@@ -2,6 +2,7 @@ import torch
 from tqdm import tqdm
 
 from src.constants import DEVICE
+from src.model import get_lossfn
 
 from .metrics import calc_score
 
@@ -23,7 +24,7 @@ def pbar_valid_desc(pbar_val, average_loss):
     pbar_val.set_description(description)
 
 
-def train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cfg):
+def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
     train_loss = 0
 
     model.train()
@@ -40,6 +41,7 @@ def train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cf
         labels = batch["target"].to(DEVICE, dtype=torch.float)
         optimizer.zero_grad()
         outputs = model(inputs).squeeze()
+        criterion = get_lossfn(cfg, labels)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -52,7 +54,7 @@ def train_1epoch(model, train_loader, optimizer, criterion, scheduler, epoch, cf
     return average_loss
 
 
-def valid_1epoch(model, valid_loader, criterion, epoch, cfg):
+def valid_1epoch(model, valid_loader, epoch, cfg):
     valid_loss = 0
     y_true = torch.tensor([], device=DEVICE)
     all_outputs = torch.tensor([], device=DEVICE)
@@ -70,7 +72,7 @@ def valid_1epoch(model, valid_loader, criterion, epoch, cfg):
             inputs = batch["image"].to(DEVICE, dtype=torch.float)
             labels = batch["target"].to(DEVICE, dtype=torch.float)
             outputs = model(inputs).squeeze()
-
+            criterion = get_lossfn(cfg, labels)
             valid_loss += criterion(outputs, labels).item()
             y_true = torch.cat((y_true, labels), 0)
             all_outputs = torch.cat((all_outputs, outputs), 0)
