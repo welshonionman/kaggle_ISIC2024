@@ -9,17 +9,24 @@ from torch.utils.data import Dataset
 
 class ISIC_Base_Train_Dataset(Dataset):
     def __init__(self, df, cfg):
-        auxtarget = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtarget", [])
         self.df_positive = df[df["target"] == 1].reset_index()
         self.df_negative = df[df["target"] == 0].reset_index()
         self.file_names_positive = self.df_positive["file_path"].values
         self.file_names_negative = self.df_negative["file_path"].values
-        self.targets_positive = self.df_positive[["target"] + auxtarget].values
-        self.targets_negative = self.df_negative[["target"] + auxtarget].values
+        self.targets_positive = self.df_positive[["target"] + self.auxtargets].values
+        self.targets_negative = self.df_negative[["target"] + self.auxtargets].values
         self.transforms = cfg.train_transform
 
     def __len__(self):
         return len(self.df_positive) * 2
+
+    def gen_target_dict(self, target):
+        target_dict = {}
+        target_dict["malignant"] = target[0]
+        for i_target, auxtarget in enumerate(self.auxtargets):
+            target_dict[auxtarget] = target[i_target + 1]
+        return target_dict
 
     def __getitem__(self, index):
         if random.random() >= 0.5:
@@ -40,19 +47,28 @@ class ISIC_Base_Train_Dataset(Dataset):
         if self.transforms:
             img = self.transforms(image=img)["image"]
 
-        return {"image": img, "target": target}
+        target_dict = self.gen_target_dict(target)
+
+        return {"image": img, "target": target_dict}
 
 
 class ISIC_Base_Valid_Dataset(Dataset):
     def __init__(self, df, cfg):
-        auxtarget = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtarget", [])
         self.df = df
         self.file_names = df["file_path"].values
-        self.targets = df[["target"] + auxtarget].values
+        self.targets = df[["target"] + self.auxtargets].values
         self.transforms = cfg.valid_transform
 
     def __len__(self):
         return len(self.df)
+
+    def gen_target_dict(self, target):
+        target_dict = {}
+        target_dict["malignant"] = target[0]
+        for i_target, auxtarget in enumerate(self.auxtargets):
+            target_dict[auxtarget] = target[i_target + 1]
+        return target_dict
 
     def __getitem__(self, index):
         img_path = self.file_names[index]
@@ -63,7 +79,9 @@ class ISIC_Base_Valid_Dataset(Dataset):
         if self.transforms:
             img = self.transforms(image=img)["image"]
 
-        return {"image": img, "target": target}
+        target_dict = self.gen_target_dict(target)
+
+        return {"image": img, "target": target_dict}
 
 
 class ISIC_Base_Test_Dataset(Dataset):

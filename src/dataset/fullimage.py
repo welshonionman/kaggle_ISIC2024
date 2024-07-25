@@ -10,38 +10,53 @@ from torch.utils.data import Dataset
 
 class ISIC_Fullimage_Train_Dataset(Dataset):
     def __init__(self, df, cfg):
-        auxtarget = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtarget", [])
         self.df = df
         self.file_names = self.df["file_path"].values
-        self.targets = self.df[["target"] + auxtarget].values
+        self.targets = self.df[["target"] + self.auxtargets].values
         self.transforms = cfg.train_transform
 
     def __len__(self):
         return len(self.df)
 
+    def gen_target_dict(self, target):
+        target_dict = {}
+        target_dict["malignant"] = target[0]
+        for i_target, auxtarget in enumerate(self.auxtargets):
+            target_dict[auxtarget] = target[i_target + 1]
+        return target_dict
+
     def __getitem__(self, index):
         img_path = self.file_names[index]
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         target = torch.tensor(self.targets[index])
-
         if self.transforms:
             img = self.transforms(image=img)["image"]
 
-        return {"image": img, "target": target}
+        target_dict = self.gen_target_dict(target)
+
+        return {"image": img, "target": target_dict}
 
 
 class ISIC_Fullimage_Valid_Dataset(Dataset):
     def __init__(self, df, cfg):
-        auxtarget = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtarget", [])
         self.df = df
         self.file_names = df["file_path"].values
-        self.targets = self.df[["target"] + auxtarget].values
+        self.targets = self.df[["target"] + self.auxtargets].values
         self.transforms = cfg.valid_transform
 
     def __len__(self):
         return len(self.df)
 
+    def gen_target_dict(self, target):
+        target_dict = {}
+        target_dict["malignant"] = target[0]
+        for i_target, auxtarget in enumerate(self.auxtargets):
+            target_dict[auxtarget] = target[i_target + 1]
+        return target_dict
+
     def __getitem__(self, index):
         img_path = self.file_names[index]
         img = cv2.imread(img_path)
@@ -51,7 +66,9 @@ class ISIC_Fullimage_Valid_Dataset(Dataset):
         if self.transforms:
             img = self.transforms(image=img)["image"]
 
-        return {"image": img, "target": target}
+        target_dict = self.gen_target_dict(target)
+
+        return {"image": img, "target": target_dict}
 
 
 class ISIC_Fullimage_Test_Dataset(Dataset):
