@@ -26,7 +26,7 @@ def get_train_dataloader(df, fold, cfg):
             train_dataset = ISIC_Fullimage_Train_Dataset(df_train, cfg)
             valid_dataset = ISIC_Fullimage_Valid_Dataset(df_valid, cfg)
         case _:
-            raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
+            raise ValueError(f"Invalid Dataset Name: {cfg.dataset}")
 
     train_loader = DataLoader(
         train_dataset,
