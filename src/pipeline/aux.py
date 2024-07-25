@@ -33,6 +33,7 @@ def pbar_valid_desc(pbar_val, average_loss):
 
 
 def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
+    auxtarget = getattr(cfg, "auxtarget", [])
     train_loss = 0
 
     model.train()
@@ -45,26 +46,31 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
     )
 
     for batch_idx, batch in pbar_train:
-        inputs = batch["image"].to(DEVICE, dtype=torch.float)
-
-        labels = batch["target"].to(DEVICE, dtype=torch.float)[:, [0]]
-        aux_labels = batch["target"].to(DEVICE, dtype=torch.float)[:, 1:]
         optimizer.zero_grad()
 
-        outputs = model(inputs)["malignant"]
+        inputs = batch["image"].to(DEVICE, dtype=torch.float)
+        labels = batch["target"]
+        for key, value in labels.items():
+            labels[key] = value.to(DEVICE, dtype=torch.float)
 
-        # criterion = get_lossfn(cfg, labels)
-        criterion = nn.BCEWithLogitsLoss()
-        aux_criterion_1 = nn.BCEWithLogitsLoss()
+        outputs = model(inputs)
 
-        loss = criterion(outputs[:, [0]], labels)
-        loss_1 = aux_criterion_1(outputs[:, [1]], aux_labels)
-        loss_ = loss + loss_1
-        loss_.backward()
+        criterion_mal = nn.BCELoss()
+        criterion_sex = nn.BCELoss()
+        # criterion_age = nn.BCELoss()
+        # criterion_site = nn.BCELoss()
+
+        loss_mal = criterion_mal(outputs["malignant"].squeeze(), labels["malignant"])
+        loss_sex = criterion_sex(outputs["sex"].squeeze(), labels["sex"])
+        # loss_age = criterion_age(outputs[:, [1]], aux_labels)
+        # loss_site = criterion_site(outputs[:, [1]], aux_labels)
+
+        loss_sum = loss_mal + loss_sex
+        loss_sum.backward()
 
         optimizer.step()
 
-        train_loss += loss_.item()
+        train_loss += loss_sum.item()
         average_loss = train_loss / (batch_idx + 1)
 
         pbar_train_desc(pbar_train, scheduler, epoch, cfg.epochs, average_loss)
@@ -73,8 +79,9 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
 
 
 def valid_1epoch(model, valid_loader, epoch, cfg):
+    auxtarget = getattr(cfg, "auxtarget", [])
     valid_loss = 0
-    y_true = torch.tensor([], device=DEVICE)
+    all_true = torch.tensor([], device=DEVICE)
     all_outputs = torch.tensor([], device=DEVICE)
     model.eval()
 
@@ -88,26 +95,29 @@ def valid_1epoch(model, valid_loader, epoch, cfg):
     with torch.inference_mode():
         for batch_idx, batch in pbar_val:
             inputs = batch["image"].to(DEVICE, dtype=torch.float)
-            labels = batch["target"].to(DEVICE, dtype=torch.float)[:, [0]]
-            aux_labels = batch["target"].to(DEVICE, dtype=torch.float)[:, 1:]
+            labels = batch["target"]
+            for key, value in labels.items():
+                labels[key] = value.to(DEVICE, dtype=torch.float)
 
-            outputs = model(inputs)["malignant"].squeeze()
+            outputs = model(inputs)
 
-            # criterion = get_lossfn(cfg, labels)
-            criterion = nn.BCEWithLogitsLoss()
-            aux_criterion_1 = nn.BCEWithLogitsLoss()
+            # criterion_mal = get_lossfn(cfg, labels)
+            criterion_mal = nn.BCELoss()
+            criterion_sex = nn.BCELoss()
 
-            loss = criterion(outputs[:, [0]], labels).item()
-            loss_1 = aux_criterion_1(outputs[:, [1]], aux_labels).item()
-            loss_ = loss + loss_1
-            valid_loss += loss_
-            y_true = torch.cat((y_true, labels[:, [0]]), 0)
-            all_outputs = torch.cat((all_outputs, outputs[:, [0]]), 0)
+            loss_mal = criterion_mal(
+                outputs["malignant"].squeeze(), labels["malignant"]
+            )
+            loss_sex = criterion_sex(outputs["sex"].squeeze(), labels["sex"])
+            loss_sum = loss_mal + loss_sex
+            valid_loss += loss_sum
+            all_true = torch.cat((all_true, labels["malignant"].squeeze()), 0)
+            all_outputs = torch.cat((all_outputs, outputs["malignant"].squeeze()), 0)
 
             average_loss = valid_loss / (batch_idx + 1)
             pbar_valid_desc(pbar_val, average_loss)
 
-    score = calc_score(y_true.cpu(), all_outputs.cpu())
+    score = calc_score(all_true.cpu(), all_outputs.cpu())
     return average_loss, score
 
 
