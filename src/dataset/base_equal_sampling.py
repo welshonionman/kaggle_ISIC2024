@@ -3,17 +3,19 @@ import random
 import cv2
 import h5py
 import numpy as np
+import torch
 from torch.utils.data import Dataset
 
 
 class ISIC_Base_Train_Dataset(Dataset):
     def __init__(self, df, cfg):
+        auxtarget = getattr(cfg, "auxtarget", [])
         self.df_positive = df[df["target"] == 1].reset_index()
         self.df_negative = df[df["target"] == 0].reset_index()
         self.file_names_positive = self.df_positive["file_path"].values
         self.file_names_negative = self.df_negative["file_path"].values
-        self.targets_positive = self.df_positive["target"].values
-        self.targets_negative = self.df_negative["target"].values
+        self.targets_positive = self.df_positive[["target"] + auxtarget].values
+        self.targets_negative = self.df_negative[["target"] + auxtarget].values
         self.transforms = cfg.train_transform
 
     def __len__(self):
@@ -33,7 +35,7 @@ class ISIC_Base_Train_Dataset(Dataset):
         img_path = file_names[index]
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        target = targets[index]
+        target = torch.tensor(targets[index])
 
         if self.transforms:
             img = self.transforms(image=img)["image"]
@@ -43,9 +45,10 @@ class ISIC_Base_Train_Dataset(Dataset):
 
 class ISIC_Base_Valid_Dataset(Dataset):
     def __init__(self, df, cfg):
+        auxtarget = getattr(cfg, "auxtarget", [])
         self.df = df
         self.file_names = df["file_path"].values
-        self.targets = df["target"].values
+        self.targets = df[["target"] + auxtarget].values
         self.transforms = cfg.valid_transform
 
     def __len__(self):
@@ -55,7 +58,7 @@ class ISIC_Base_Valid_Dataset(Dataset):
         img_path = self.file_names[index]
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        target = self.targets[index]
+        target = torch.tensor(self.targets[index])
 
         if self.transforms:
             img = self.transforms(image=img)["image"]
@@ -76,10 +79,10 @@ class ISIC_Base_Test_Dataset(Dataset):
 
     def __getitem__(self, index):
         isic_id = self.isic_ids[index]
-        img_data = self.fp_hdf[isic_id][()]
+        img_data = self.hdf_path[isic_id][()]
         img_array = np.frombuffer(img_data, np.uint8)
         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-        target = self.targets[index]
+        target = torch.tensor(self.targets[index])
 
         if self.transforms:
             img = self.transforms(image=img)["image"]

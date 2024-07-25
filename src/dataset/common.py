@@ -2,11 +2,6 @@ from torch.utils.data import DataLoader
 
 from src.constants import TEST_HDF
 
-from .auxpred import (
-    ISIC_Auxpred_Test_Dataset,
-    ISIC_Auxpred_Train_Dataset,
-    ISIC_Auxpred_Valid_Dataset,
-)
 from .base_equal_sampling import (
     ISIC_Base_Test_Dataset,
     ISIC_Base_Train_Dataset,
@@ -30,9 +25,6 @@ def get_train_dataloader(df, fold, cfg):
         case "fullimage":
             train_dataset = ISIC_Fullimage_Train_Dataset(df_train, cfg)
             valid_dataset = ISIC_Fullimage_Valid_Dataset(df_valid, cfg)
-        case "aux":
-            train_dataset = ISIC_Auxpred_Train_Dataset(df_train, cfg)
-            valid_dataset = ISIC_Auxpred_Valid_Dataset(df_valid, cfg)
         case _:
             raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
 
@@ -61,8 +53,6 @@ def get_test_dataloader(df, cfg):
             test_dataset = ISIC_Base_Test_Dataset(df, TEST_HDF, cfg)
         case "fullimage":
             test_dataset = ISIC_Fullimage_Test_Dataset(df, TEST_HDF, cfg)
-        case "aux":
-            test_dataset = ISIC_Auxpred_Test_Dataset(df, TEST_HDF, cfg)
         case _:
             raise ValueError(f"Invalid Dataset Name: {cfg.pipeline}")
 
