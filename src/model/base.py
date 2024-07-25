@@ -37,5 +37,5 @@ class ISIC_Base_Model(nn.Module):
     def forward(self, images):
         features = self.model(images)
         pooled_features = self.pooling(features).flatten(1)
-        output = self.sigmoid(self.linear(pooled_features))
-        return output
+        malignant = self.sigmoid(self.linear(pooled_features))
+        return {"malignant": malignant}
