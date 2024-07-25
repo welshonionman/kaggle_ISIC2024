@@ -44,14 +44,19 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
     )
 
     for batch_idx, batch in pbar_train:
-        inputs = batch["image"].to(DEVICE, dtype=torch.float)
-        labels = batch["target"].to(DEVICE, dtype=torch.float)
-
         optimizer.zero_grad()
+
+        inputs = batch["image"].to(DEVICE, dtype=torch.float)
+        labels = batch["target"]
+        for key, value in labels.items():
+            labels[key] = value.to(DEVICE, dtype=torch.float)
+
         outputs = model(inputs)
         output_malignant = outputs["malignant"].squeeze()
-        labels_malignant = labels[:, 0]
+        labels_malignant = labels["malignant"]
+
         criterion = get_lossfn(cfg, labels_malignant)
+
         loss = criterion(output_malignant, labels_malignant)
         loss.backward()
         optimizer.step()
@@ -66,7 +71,7 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
 
 def valid_1epoch(model, valid_loader, epoch, cfg):
     valid_loss = 0
-    y_true = torch.tensor([], device=DEVICE)
+    all_true = torch.tensor([], device=DEVICE)
     all_outputs = torch.tensor([], device=DEVICE)
     model.eval()
 
@@ -80,18 +85,26 @@ def valid_1epoch(model, valid_loader, epoch, cfg):
     with torch.inference_mode():
         for batch_idx, batch in pbar_val:
             inputs = batch["image"].to(DEVICE, dtype=torch.float)
-            labels = batch["target"].to(DEVICE, dtype=torch.float)[:, 0]
+            labels = batch["target"]
+            for key, value in labels.items():
+                labels[key] = value.to(DEVICE, dtype=torch.float)
 
-            outputs = model(inputs)["malignant"].squeeze()
-            criterion = get_lossfn(cfg, labels)
-            valid_loss += criterion(outputs, labels).item()
-            y_true = torch.cat((y_true, labels), 0)
-            all_outputs = torch.cat((all_outputs, outputs), 0)
+            outputs = model(inputs)
+            output_malignant = outputs["malignant"].squeeze()
+            labels_malignant = labels["malignant"]
 
+            criterion = get_lossfn(cfg, labels_malignant)
+
+            loss = criterion(output_malignant, labels_malignant).item()
+
+            valid_loss += loss
             average_loss = valid_loss / (batch_idx + 1)
+
+            all_outputs = torch.cat((all_outputs, output_malignant), 0)
+            all_true = torch.cat((all_true, labels_malignant), 0)
             pbar_valid_desc(pbar_val, average_loss)
 
-    score = calc_score(y_true.cpu(), all_outputs.cpu())
+    score = calc_score(all_true.cpu(), all_outputs.cpu())
     return average_loss, score
 
 
