@@ -38,16 +38,15 @@ class ISIC_Aux_Model(nn.Module):
         self.linear_sex = nn.Linear(in_features, 1)
         self.linear_age = nn.Linear(in_features, 1)
         self.linear_site = nn.Linear(in_features, 1)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, images):
         features = self.model(images)
         pooled_features = self.pooling(features).flatten(1)
 
-        malignant = self.sigmoid(self.linear_mal(pooled_features))
-        sex = self.sigmoid(self.linear_sex(pooled_features))
-        age = self.sigmoid(self.linear_age(pooled_features))
-        site = self.sigmoid(self.linear_site(pooled_features))
+        malignant = self.linear_mal(pooled_features)
+        sex = self.linear_sex(pooled_features)
+        age = self.linear_age(pooled_features)
+        site = self.linear_site(pooled_features)
 
         return {
             "malignant": malignant,

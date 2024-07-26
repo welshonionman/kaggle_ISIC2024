@@ -32,10 +32,9 @@ class ISIC_Base_Model(nn.Module):
         self.model.global_pool = nn.Identity()
         self.pooling = GeM()
         self.linear = nn.Linear(in_features, num_classes)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, images):
         features = self.model(images)
         pooled_features = self.pooling(features).flatten(1)
-        malignant = self.sigmoid(self.linear(pooled_features))
+        malignant = self.linear(pooled_features)
         return {"malignant": malignant}
