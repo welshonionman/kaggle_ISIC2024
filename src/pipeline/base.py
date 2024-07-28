@@ -169,9 +169,9 @@ def base_infer_pipeline(cfg):
     with torch.no_grad():
         bar = tqdm(enumerate(test_loader), total=len(test_loader))
         for step, data in bar:
-            images = data["image"].to(cfg["device"], dtype=torch.float)
+            images = data["image"].to(DEVICE, dtype=torch.float)
             outputs = model(images)
-            preds.append(outputs.detach().cpu().numpy())
+            preds.append(torch.sigmoid(outputs["malignant"]).detach().cpu().numpy())
     preds = np.concatenate(preds).flatten()
     df_sub["target"] = preds
     df_sub.to_csv("submission.csv", index=False)

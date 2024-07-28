@@ -64,13 +64,13 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
             "malignant": criterion_mal(
                 outputs["malignant"].squeeze(), labels["malignant"]
             ),
-            "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
-            "age_approx": criterion_age(outputs["age"].squeeze(), labels["age_approx"])
-            / 700,
-            "anatom_site_general": criterion_site(
-                outputs["site"].squeeze(), labels["anatom_site_general"].long()
-            )
-            / 6,
+            # "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
+            # "age_approx": criterion_age(outputs["age"].squeeze(), labels["age_approx"])
+            # / 700,
+            # "anatom_site_general": criterion_site(
+            #     outputs["site"].squeeze(), labels["anatom_site_general"].long()
+            # )
+            # / 6,
         }
 
         loss_sum = losses["malignant"] + sum([losses[key] for key in auxtargets])
@@ -204,9 +204,9 @@ def aux_infer_pipeline(cfg):
     with torch.no_grad():
         bar = tqdm(enumerate(test_loader), total=len(test_loader))
         for step, data in bar:
-            images = data["image"].to(cfg["device"], dtype=torch.float)
+            images = data["image"].to(DEVICE, dtype=torch.float)
             outputs = model(images)
-            preds.append(outputs.detach().cpu().numpy())
+            preds.append(torch.sigmoid(outputs["malignant"]).detach().cpu().numpy())
     preds = np.concatenate(preds).flatten()
     df_sub["target"] = preds
     df_sub.to_csv("submission.csv", index=False)
