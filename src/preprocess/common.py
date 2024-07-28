@@ -14,7 +14,7 @@ def get_train_preprocess(cfg):
 
 def get_infer_preprocess(cfg):
     match cfg.preprocess:
-        case "base":
+        case "base_negative_sampling":
             return infer_base_preprocess
         case "fullimage":
             return infer_fullimage_preprocess
