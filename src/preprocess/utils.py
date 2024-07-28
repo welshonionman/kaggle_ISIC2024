@@ -1,8 +1,9 @@
 from src.constants import TRAIN_DIR
 
 
-def get_train_file_path(image_id):
-    return f"{TRAIN_DIR}/{image_id}.jpg"
+def get_train_file_path(image_id, cfg):
+    image_dir = getattr(cfg, "image_dir", TRAIN_DIR)
+    return f"{image_dir}/{image_id}.jpg"
 
 
 def impute_missing_values(df):
