@@ -162,7 +162,8 @@ def base_infer_pipeline(cfg):
     test_loader = get_test_dataloader(df, cfg)
 
     model = get_model(cfg)
-    model.load_state_dict(torch.load(cfg.weight_path)).to(DEVICE)
+    model.load_state_dict(torch.load(cfg.weight_path))
+    model.to(DEVICE)
 
     preds = []
     with torch.no_grad():

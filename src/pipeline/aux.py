@@ -59,6 +59,7 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
         criterion_sex = nn.BCEWithLogitsLoss()
         criterion_age = nn.MSELoss()
         criterion_site = nn.CrossEntropyLoss()
+
         losses = {
             "malignant": criterion_mal(
                 outputs["malignant"].squeeze(), labels["malignant"]
@@ -118,15 +119,15 @@ def valid_1epoch(model, valid_loader, epoch, cfg):
                 "malignant": criterion_mal(
                     outputs["malignant"].squeeze(), labels["malignant"]
                 ),
-                "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
-                "age_approx": criterion_age(
-                    outputs["age"].squeeze(), labels["age_approx"].long()
-                )
-                / 700,
-                "anatom_site_general": criterion_site(
-                    outputs["site"].squeeze(), labels["anatom_site_general"].long()
-                )
-                / 6,
+                # "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
+                # "age_approx": criterion_age(
+                #     outputs["age"].squeeze(), labels["age_approx"].long()
+                # )
+                # / 700,
+                # "anatom_site_general": criterion_site(
+                #     outputs["site"].squeeze(), labels["anatom_site_general"].long()
+                # )
+                # / 6,
             }
 
             loss_sum = losses["malignant"] + sum([losses[key] for key in auxtargets])
@@ -196,7 +197,8 @@ def aux_infer_pipeline(cfg):
     test_loader = get_test_dataloader(df, cfg)
 
     model = get_model(cfg)
-    model.load_state_dict(torch.load(cfg.weight_path)).to(DEVICE)
+    model.load_state_dict(torch.load(cfg.weight_path))
+    model.to(DEVICE)
 
     preds = []
     with torch.no_grad():
