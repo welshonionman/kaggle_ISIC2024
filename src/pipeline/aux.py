@@ -32,6 +32,34 @@ def pbar_valid_desc(pbar_val, average_loss):
     pbar_val.set_description(description)
 
 
+def calc_loss(outputs, labels, auxtargets):
+    losses = {}
+
+    criterion_mal = nn.BCEWithLogitsLoss()
+    output_mal = outputs["malignant"].squeeze()
+    label_mal = labels["malignant"]
+    losses["malignant"] = criterion_mal(output_mal, label_mal)
+
+    if "sex" in auxtargets:
+        criterion_sex = nn.BCEWithLogitsLoss()
+        output_sex = outputs["sex"].squeeze()
+        label_sex = labels["sex"]
+        losses["sex"] = criterion_sex(output_sex, label_sex) / 3
+
+    if "age_approx" in auxtargets:
+        criterion_age = nn.MSELoss()
+        output_age = outputs["age"].squeeze()
+        label_age = labels["age_approx"]
+        losses["age_approx"] = criterion_age(output_age, label_age) / 700
+
+    if "anatom_site_general" in auxtargets:
+        criterion_site = nn.CrossEntropyLoss()
+        output_site = outputs["site"].squeeze()
+        label_site = labels["anatom_site_general"].long()
+        losses["anatom_site_general"] = criterion_site(output_site, label_site) / 6
+    return losses
+
+
 def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
     auxtargets = getattr(cfg, "auxtargets", [])
     train_loss = 0
@@ -55,25 +83,11 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
 
         outputs = model(inputs)
 
-        criterion_mal = nn.BCEWithLogitsLoss()
-        criterion_sex = nn.BCEWithLogitsLoss()
-        criterion_age = nn.MSELoss()
-        criterion_site = nn.CrossEntropyLoss()
+        losses = calc_loss(outputs, labels, auxtargets)
 
-        losses = {
-            "malignant": criterion_mal(
-                outputs["malignant"].squeeze(), labels["malignant"]
-            ),
-            # "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
-            # "age_approx": criterion_age(outputs["age"].squeeze(), labels["age_approx"])
-            # / 700,
-            # "anatom_site_general": criterion_site(
-            #     outputs["site"].squeeze(), labels["anatom_site_general"].long()
-            # )
-            # / 6,
-        }
-
-        loss_sum = losses["malignant"] + sum([losses[key] for key in auxtargets])
+        loss_sum = losses["malignant"] + sum(
+            [losses[auxtarget] for auxtarget in auxtargets]
+        )
 
         loss_sum.backward()
 
@@ -110,27 +124,11 @@ def valid_1epoch(model, valid_loader, epoch, cfg):
 
             outputs = model(inputs)
 
-            criterion_mal = nn.BCEWithLogitsLoss()
-            criterion_sex = nn.BCEWithLogitsLoss()
-            criterion_age = nn.MSELoss()
-            criterion_site = nn.CrossEntropyLoss()
+            losses = calc_loss(outputs, labels, auxtargets)
 
-            losses = {
-                "malignant": criterion_mal(
-                    outputs["malignant"].squeeze(), labels["malignant"]
-                ),
-                # "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
-                # "age_approx": criterion_age(
-                #     outputs["age"].squeeze(), labels["age_approx"].long()
-                # )
-                # / 700,
-                # "anatom_site_general": criterion_site(
-                #     outputs["site"].squeeze(), labels["anatom_site_general"].long()
-                # )
-                # / 6,
-            }
-
-            loss_sum = losses["malignant"] + sum([losses[key] for key in auxtargets])
+            loss_sum = losses["malignant"] + sum(
+                [losses[auxtarget] for auxtarget in auxtargets]
+            )
 
             valid_loss += loss_sum
             all_true = torch.cat((all_true, labels["malignant"].squeeze()), 0)
