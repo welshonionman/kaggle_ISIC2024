@@ -84,7 +84,9 @@ class ISIC_Fullimage_Test_Dataset(Dataset):
 
     def __getitem__(self, index):
         isic_id = self.isic_ids[index]
-        img = np.array(Image.open(BytesIO(self.fp_hdf[isic_id][()])))
+        img_data = self.hdf_path[isic_id][()]
+        img_array = np.frombuffer(img_data, np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         target = torch.tensor(self.targets[index])
 
         if self.transforms:
