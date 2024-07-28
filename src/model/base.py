@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.constants import IS_KAGGLE_NOTEBOOK
+
 
 class GeM(nn.Module):
     def __init__(self, p=3, eps=1e-6):
@@ -23,7 +25,7 @@ class GeM(nn.Module):
 
 
 class ISIC_Base_Model(nn.Module):
-    def __init__(self, encoder_name, num_classes=1, pretrained=True):
+    def __init__(self, encoder_name, num_classes=1, pretrained=not IS_KAGGLE_NOTEBOOK):
         super(ISIC_Base_Model, self).__init__()
         self.model = timm.create_model(encoder_name, pretrained=pretrained)
 

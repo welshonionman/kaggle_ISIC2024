@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.constants import IS_KAGGLE_NOTEBOOK
+
 
 class GeM(nn.Module):
     def __init__(self, p=3, eps=1e-6):
@@ -25,9 +27,7 @@ class GeM(nn.Module):
 class ISIC_Aux_Model(nn.Module):
     def __init__(self, encoder_name, cfg):
         super(ISIC_Aux_Model, self).__init__()
-        auxtarget = getattr(cfg, "auxtarget", [])
-
-        self.model = timm.create_model(encoder_name, pretrained=True)
+        self.model = timm.create_model(encoder_name, pretrained=not IS_KAGGLE_NOTEBOOK)
 
         in_features = self.model.classifier.in_features
         self.model.classifier = nn.Identity()
@@ -37,7 +37,7 @@ class ISIC_Aux_Model(nn.Module):
         self.linear_mal = nn.Linear(in_features, 1)
         self.linear_sex = nn.Linear(in_features, 1)
         self.linear_age = nn.Linear(in_features, 1)
-        self.linear_site = nn.Linear(in_features, 1)
+        self.linear_site = nn.Linear(in_features, 5)
 
     def forward(self, images):
         features = self.model(images)
