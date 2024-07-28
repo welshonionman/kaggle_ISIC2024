@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 
 class ISIC_Base_Train_Dataset(Dataset):
     def __init__(self, df, cfg):
-        self.auxtargets = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtargets", [])
         self.df_positive = df[df["target"] == 1].reset_index()
         self.df_negative = df[df["target"] == 0].reset_index()
         self.file_names_positive = self.df_positive["file_path"].values
@@ -24,8 +24,8 @@ class ISIC_Base_Train_Dataset(Dataset):
     def gen_target_dict(self, target):
         target_dict = {}
         target_dict["malignant"] = target[0]
-        for i_target, auxtarget in enumerate(self.auxtargets):
-            target_dict[auxtarget] = target[i_target + 1]
+        for i_target, auxtargets in enumerate(self.auxtargets):
+            target_dict[auxtargets] = target[i_target + 1]
         return target_dict
 
     def __getitem__(self, index):
@@ -54,7 +54,7 @@ class ISIC_Base_Train_Dataset(Dataset):
 
 class ISIC_Base_Valid_Dataset(Dataset):
     def __init__(self, df, cfg):
-        self.auxtargets = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtargets", [])
         self.df = df
         self.file_names = df["file_path"].values
         self.targets = df[["target"] + self.auxtargets].values
@@ -66,8 +66,8 @@ class ISIC_Base_Valid_Dataset(Dataset):
     def gen_target_dict(self, target):
         target_dict = {}
         target_dict["malignant"] = target[0]
-        for i_target, auxtarget in enumerate(self.auxtargets):
-            target_dict[auxtarget] = target[i_target + 1]
+        for i_target, auxtargets in enumerate(self.auxtargets):
+            target_dict[auxtargets] = target[i_target + 1]
         return target_dict
 
     def __getitem__(self, index):

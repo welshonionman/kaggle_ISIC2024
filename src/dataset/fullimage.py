@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 
 class ISIC_Fullimage_Train_Dataset(Dataset):
     def __init__(self, df, cfg):
-        self.auxtargets = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtargets", [])
         self.df = df
         self.file_names = self.df["file_path"].values
         self.targets = self.df[["target"] + self.auxtargets].values
@@ -41,7 +41,7 @@ class ISIC_Fullimage_Train_Dataset(Dataset):
 
 class ISIC_Fullimage_Valid_Dataset(Dataset):
     def __init__(self, df, cfg):
-        self.auxtargets = getattr(cfg, "auxtarget", [])
+        self.auxtargets = getattr(cfg, "auxtargets", [])
         self.df = df
         self.file_names = df["file_path"].values
         self.targets = self.df[["target"] + self.auxtargets].values

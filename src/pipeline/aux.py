@@ -33,7 +33,7 @@ def pbar_valid_desc(pbar_val, average_loss):
 
 
 def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
-    auxtarget = getattr(cfg, "auxtarget", [])
+    auxtargets = getattr(cfg, "auxtargets", [])
     train_loss = 0
 
     model.train()
@@ -55,17 +55,25 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
 
         outputs = model(inputs)
 
-        criterion_mal = nn.BCELoss()
-        criterion_sex = nn.BCELoss()
-        # criterion_age = nn.BCELoss()
-        # criterion_site = nn.BCELoss()
+        criterion_mal = nn.BCEWithLogitsLoss()
+        criterion_sex = nn.BCEWithLogitsLoss()
+        criterion_age = nn.MSELoss()
+        criterion_site = nn.CrossEntropyLoss()
+        losses = {
+            "malignant": criterion_mal(
+                outputs["malignant"].squeeze(), labels["malignant"]
+            ),
+            "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
+            "age_approx": criterion_age(outputs["age"].squeeze(), labels["age_approx"])
+            / 700,
+            "anatom_site_general": criterion_site(
+                outputs["site"].squeeze(), labels["anatom_site_general"].long()
+            )
+            / 6,
+        }
 
-        loss_mal = criterion_mal(outputs["malignant"].squeeze(), labels["malignant"])
-        loss_sex = criterion_sex(outputs["sex"].squeeze(), labels["sex"])
-        # loss_age = criterion_age(outputs[:, [1]], aux_labels)
-        # loss_site = criterion_site(outputs[:, [1]], aux_labels)
+        loss_sum = losses["malignant"] + sum([losses[key] for key in auxtargets])
 
-        loss_sum = loss_mal + loss_sex
         loss_sum.backward()
 
         optimizer.step()
@@ -79,7 +87,7 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
 
 
 def valid_1epoch(model, valid_loader, epoch, cfg):
-    auxtarget = getattr(cfg, "auxtarget", [])
+    auxtargets = getattr(cfg, "auxtargets", [])
     valid_loss = 0
     all_true = torch.tensor([], device=DEVICE)
     all_outputs = torch.tensor([], device=DEVICE)
@@ -101,15 +109,28 @@ def valid_1epoch(model, valid_loader, epoch, cfg):
 
             outputs = model(inputs)
 
-            # criterion_mal = get_lossfn(cfg, labels)
-            criterion_mal = nn.BCELoss()
-            criterion_sex = nn.BCELoss()
+            criterion_mal = nn.BCEWithLogitsLoss()
+            criterion_sex = nn.BCEWithLogitsLoss()
+            criterion_age = nn.MSELoss()
+            criterion_site = nn.CrossEntropyLoss()
 
-            loss_mal = criterion_mal(
-                outputs["malignant"].squeeze(), labels["malignant"]
-            )
-            loss_sex = criterion_sex(outputs["sex"].squeeze(), labels["sex"])
-            loss_sum = loss_mal + loss_sex
+            losses = {
+                "malignant": criterion_mal(
+                    outputs["malignant"].squeeze(), labels["malignant"]
+                ),
+                "sex": criterion_sex(outputs["sex"].squeeze(), labels["sex"]) / 3,
+                "age_approx": criterion_age(
+                    outputs["age"].squeeze(), labels["age_approx"].long()
+                )
+                / 700,
+                "anatom_site_general": criterion_site(
+                    outputs["site"].squeeze(), labels["anatom_site_general"].long()
+                )
+                / 6,
+            }
+
+            loss_sum = losses["malignant"] + sum([losses[key] for key in auxtargets])
+
             valid_loss += loss_sum
             all_true = torch.cat((all_true, labels["malignant"].squeeze()), 0)
             all_outputs = torch.cat((all_outputs, outputs["malignant"].squeeze()), 0)
