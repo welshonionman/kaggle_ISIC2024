@@ -7,16 +7,17 @@ from src.pipeline import get_train_pipeline
 
 
 class CFG:
-    wandb_mode = "disabled"
+    wandb_mode = "online"
     exp_name = Path(__file__).stem
 
     seed = 42
-    epochs = 50
+    epochs = 30
     img_size = 384
     n_fold = 5
 
     pipeline = "base"
-    preprocess = "base"
+    preprocess = "base_negative_sampling"
+    dataset = "fullimage"
     model_name: str = "base"
     encoder_name: str = "tf_efficientnet_b0_ns"
 
@@ -25,11 +26,12 @@ class CFG:
     learning_rate = 1e-4
 
     lossfn = "BCELoss"
-    optimizer = "Adam"
+    sampling_factor = 100
+    loss_weight = 400
+    optimizer = "AdamW"
     scheduler = "CosineAnnealingLR"
 
     min_lr = 1e-7
-    T_max = 50
     weight_decay = 1e-6
 
     train_transform = A.Compose(
