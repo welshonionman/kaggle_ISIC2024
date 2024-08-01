@@ -1,4 +1,5 @@
 from .aux import aux_infer_pipeline, aux_train_pipeline
+from .auxv2 import auxv2_infer_pipeline, auxv2_train_pipeline
 from .base import base_infer_pipeline, base_train_pipeline
 
 
@@ -8,6 +9,8 @@ def get_train_pipeline(cfg):
             return base_train_pipeline
         case "aux":
             return aux_train_pipeline
+        case "auxv2":
+            return auxv2_train_pipeline
         case _:
             raise ValueError(f"Invalid Pipeline Name: {cfg.pipeline}")
 
@@ -18,5 +21,7 @@ def get_infer_pipeline(cfg):
             return base_infer_pipeline
         case "aux":
             return aux_infer_pipeline
+        case "auxv2":
+            return auxv2_infer_pipeline
         case _:
             raise ValueError(f"Invalid Pipeline Name: {cfg.pipeline}")
