@@ -51,6 +51,6 @@ class ISIC_Aux_Model(nn.Module):
         return {
             "malignant": malignant,
             "sex": sex,
-            "age": age,
-            "site": site,
+            "age_approx": age,
+            "anatom_site_general": site,
         }

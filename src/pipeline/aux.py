@@ -48,13 +48,13 @@ def calc_loss(outputs, labels, auxtargets):
 
     if "age_approx" in auxtargets:
         criterion_age = nn.MSELoss()
-        output_age = outputs["age"].squeeze()
+        output_age = outputs["age_approx"].squeeze()
         label_age = labels["age_approx"]
-        losses["age_approx"] = criterion_age(output_age, label_age) / 700
+        losses["age_approx"] = criterion_age(output_age, label_age) / 500
 
     if "anatom_site_general" in auxtargets:
         criterion_site = nn.CrossEntropyLoss()
-        output_site = outputs["site"].squeeze()
+        output_site = outputs["anatom_site_general"].squeeze()
         label_site = labels["anatom_site_general"].long()
         losses["anatom_site_general"] = criterion_site(output_site, label_site) / 6
     return losses
@@ -101,11 +101,31 @@ def train_1epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
     return average_loss
 
 
+def calc_acc_bin(true, pred):
+    pred = (torch.sigmoid(pred) > 0.5).float()
+    return (true == pred).sum() / len(true)
+
+
+def calc_mse(true, pred):
+    return nn.MSELoss()(true, pred)
+
+
+def calc_acc_mul(true, pred):
+    pred = torch.argmax(pred, dim=1)
+    return (true == pred).sum() / len(true)
+
+
 def valid_1epoch(model, valid_loader, epoch, cfg):
     auxtargets = getattr(cfg, "auxtargets", [])
     valid_loss = 0
-    all_true = torch.tensor([], device=DEVICE)
-    all_outputs = torch.tensor([], device=DEVICE)
+    mal_true = torch.tensor([], device=DEVICE)
+    mal_outputs = torch.tensor([], device=DEVICE)
+    # sex_true = torch.tensor([], device=DEVICE)
+    # sex_outputs = torch.tensor([], device=DEVICE)
+    age_true = torch.tensor([], device=DEVICE)
+    age_outputs = torch.tensor([], device=DEVICE)
+    # site_true = torch.tensor([], device=DEVICE)
+    # site_outputs = torch.tensor([], device=DEVICE)
     model.eval()
 
     pbar_val = enumerate(valid_loader)
@@ -131,14 +151,26 @@ def valid_1epoch(model, valid_loader, epoch, cfg):
             )
 
             valid_loss += loss_sum
-            all_true = torch.cat((all_true, labels["malignant"].squeeze()), 0)
-            all_outputs = torch.cat((all_outputs, outputs["malignant"].squeeze()), 0)
+            mal_true = torch.cat((mal_true, labels["malignant"].squeeze()), 0)
+            mal_outputs = torch.cat((mal_outputs, outputs["malignant"].squeeze()), 0)
+            # sex_true = torch.cat((sex_true, labels["sex"].squeeze()), 0)
+            # sex_outputs = torch.cat((sex_outputs, outputs["sex"].squeeze()), 0)
+            age_true = torch.cat((age_true, labels["age_approx"].squeeze()), 0)
+            age_outputs = torch.cat((age_outputs, outputs["age_approx"].squeeze()), 0)
+            # site_true = torch.cat(
+            #     (site_true, labels["anatom_site_general"].squeeze()), 0
+            # )
+            # site_outputs = torch.cat((site_outputs, outputs["anatom_site_general"].squeeze()), 0)
 
             average_loss = valid_loss / (batch_idx + 1)
             pbar_valid_desc(pbar_val, average_loss)
 
-    score = calc_score(all_true.cpu(), all_outputs.cpu())
-    return average_loss, score
+    mal_score = calc_score(mal_true.cpu(), mal_outputs.cpu())
+    # sex_acc = calc_acc_bin(sex_true.cpu(), sex_outputs.cpu())
+    age_acc = calc_mse(age_true.cpu(), age_outputs.cpu())
+    # site_acc = calc_acc_mul(site_true.cpu(), site_outputs.cpu())
+    print(age_acc)
+    return average_loss, mal_score
 
 
 def epoch_end(avg_val_loss, best_score, score, model, save_path):
